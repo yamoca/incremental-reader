@@ -106,34 +106,6 @@ def LearnPassage(passage):
 
 
 
-def chunk(passage):
-    for paragraph in passage.paragraphs:
-        for clause in paragraph.clauses:
-            #variable size sliding window problem
-            pass
-
-
-# optimised sliding window
-def maxsum(inputArray, windowSize):
-    length = len(inputArray)
-    
-    # input has to be bigger than windowsize
-    if length <= windowSize:
-        print("invalid")
-        return -1
-
-    # find sum of first window using array slice
-    window_sum = sum(inputArray[:windowSize])
-
-    max_sum = window_sum
-
-    # move window along by subtracting left side of window and adding right side of window
-    for i in range(length - windowSize):
-        window_sum = window_sum - inputArray[i] + inputArray[i+windowSize]
-        max_sum = max(window_sum, max_sum)
-
-    return max_sum
-
 
 # chunk together mastered clauses
 
@@ -144,26 +116,49 @@ def checkMastered(clauses):
 
     return True
 
-# fixed size for now
-def chunkClauses(clauses, windowSize):
+
+
+def chunkClauses(clauses):
     length = len(clauses)
+    chunklist = []
+    currentChunk = []
 
-    if length <= windowSize:
-        print("invalid, length of input has to be greater than window size")
-        return -1
+    for i in range(length):
+        print("iteration: ", i)
+        print("currentChunk: ", currentChunk)
+        print("chunklist: ", chunklist)
+        print(clauses[i].level)
+        if clauses[i].level == "New":
+            currentChunk.append(i)
+        else:
+            chunklist.append(currentChunk)
+            currentChunk = []
+            chunklist.append(i)
 
-    # masteredGroup = checkMastered(clauses[:windowSize])
-    # maxsum equivalent is gonna be chunked latin and chunked english
-    window_sum_eng = " ".join([c.english for c in clauses[:windowSize]])
-    window_sum_lat = " ".join([c.latin for c in clauses[:windowSize]])
+    return chunklist
 
-    max_lat = window_sum_lat
-    mnax_eng = window_sum_eng
+print(chunkClauses(testPassage.paragraphs[0].clauses))
 
-    for i in range(length - windowSize):
-        if checkMastered(clauses[i:(i+windowSize)]):
-            window_sum_eng = " ".join([c.english for c in clauses[i:(i+windowSize)]])
-            window_sum_lat = " ".join([c.latin for c in clauses[i:(i+windowSize)]])
+# # fixed size for now
+# def chunkClauses(clauses, windowSize):
+#     length = len(clauses)
+
+#     if length <= windowSize:
+#         print("invalid, length of input has to be greater than window size")
+#         return -1
+
+#     # masteredGroup = checkMastered(clauses[:windowSize])
+#     # maxsum equivalent is gonna be chunked latin and chunked english
+#     window_sum_eng = " ".join([c.english for c in clauses[:windowSize]])
+#     window_sum_lat = " ".join([c.latin for c in clauses[:windowSize]])
+
+#     max_lat = window_sum_lat
+#     mnax_eng = window_sum_eng
+
+#     for i in range(length - windowSize):
+#         if checkMastered(clauses[i:(i+windowSize)]):
+#             window_sum_eng = " ".join([c.english for c in clauses[i:(i+windowSize)]])
+#             window_sum_lat = " ".join([c.latin for c in clauses[i:(i+windowSize)]])
 
 
 # must figure out what to do with chunked clauses e.g how to mark them as chunked, how to view chunks, how to handle chunks 

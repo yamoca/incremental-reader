@@ -3,7 +3,7 @@
 testlist = ["mastered", "mastered", "lkjsad", "mastered", "lkljdsaf", "mastered", "mastered", "mastered"]
 
 # expected output
-chunklist = [[0, 1], [2], [3], [4], [5, 6, 7]]
+expected = [[0, 1], [2], [3], [4], [5, 6, 7]]
 
 def chunkClauses(arr):
     length = len(arr)
@@ -20,9 +20,13 @@ def chunkClauses(arr):
         else:
             chunklist.append(currentChunk)
             currentChunk = []
-            chunklist.append(i)
+            chunklist.append([i])
+
+    # if final one is mastered, current chunk wont get appended to chunklist, so do it afterwards (msut be more elegant solution)
+    if arr[-1] == "mastered":
+        chunklist.append(currentChunk)
+
+    return chunklist
 
 
-
-chunkClauses(testlist)
-print(chunklist)
+print(chunkClauses(testlist))
