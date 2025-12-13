@@ -26,9 +26,41 @@ class Clause:
     def __init__(self, latin, english):
         self.latin = latin
         self.english = english
-        self.avgAccuracy = 0
+        self._avgAccuracy = 0 #use a "hidden variable" so the settr doesnt recursively call itself
         self.attempts = 0
+        self.level = "New" 
+    
+    @property
+    def avgAccuracy(self):
+        return self._avgAccuracy
 
+    @avgAccuracy.setter
+    def avgAccuracy(self, value):
+        self._avgAccuracy = value
+        self.updateLevel()
+    
+    def updateLevel(self):
+        if self.avgAccuracy < 30:
+            self.level = "New"
+        elif self.avgAccuracy < 50:
+            self.level = "Fresh"
+        elif self.avgAccuracy < 70:
+            self.level = "Learning" 
+        elif self.avgAccuracy < 90:
+            self.level = "Good" 
+        else:
+            self.level = "Mastered"
+
+
+
+
+'''
+0 - 30 new
+30 - 50 fresh
+50 - 70 learning
+70 - 90 good
+90+ master
+'''
 
 # example hardcoded passage
 testPassage = Passage(
@@ -46,7 +78,6 @@ testPassage = Passage(
         ])
     ]
 )
-
 def LearnPassage(passage):
     while True:
         for paragraph in passage.paragraphs:
@@ -63,6 +94,7 @@ def LearnPassage(passage):
                 clause.avgAccuracy = (clause.avgAccuracy * clause.attempts + accuracy) / (clause.attempts + 1)
                 clause.attempts += 1
                 print(clause.avgAccuracy)
+                print(clause.level)
                 if userInput.lower() != clause.english:
                     print(f"{clause.english}")
                     while True:
@@ -72,6 +104,72 @@ def LearnPassage(passage):
                         print(f"{clause.english}")
 
 
+
+
+def chunk(passage):
+    for paragraph in passage.paragraphs:
+        for clause in paragraph.clauses:
+            #variable size sliding window problem
+            pass
+
+
+# optimised sliding window
+def maxsum(inputArray, windowSize):
+    length = len(inputArray)
+    
+    # input has to be bigger than windowsize
+    if length <= windowSize:
+        print("invalid")
+        return -1
+
+    # find sum of first window using array slice
+    window_sum = sum(inputArray[:windowSize])
+
+    max_sum = window_sum
+
+    # move window along by subtracting left side of window and adding right side of window
+    for i in range(length - windowSize):
+        window_sum = window_sum - inputArray[i] + inputArray[i+windowSize]
+        max_sum = max(window_sum, max_sum)
+
+    return max_sum
+
+
+# chunk together mastered clauses
+
+def checkMastered(clauses):
+    for clause in clauses:
+        if clause.level != "Mastered":
+            return False
+
+    return True
+
+# fixed size for now
+def chunkClauses(clauses, windowSize):
+    length = len(clauses)
+
+    if length <= windowSize:
+        print("invalid, length of input has to be greater than window size")
+        return -1
+
+    # masteredGroup = checkMastered(clauses[:windowSize])
+    # maxsum equivalent is gonna be chunked latin and chunked english
+    window_sum_eng = " ".join([c.english for c in clauses[:windowSize]])
+    window_sum_lat = " ".join([c.latin for c in clauses[:windowSize]])
+
+    max_lat = window_sum_lat
+    mnax_eng = window_sum_eng
+
+    for i in range(length - windowSize):
+        if checkMastered(clauses[i:(i+windowSize)]):
+            window_sum_eng = " ".join([c.english for c in clauses[i:(i+windowSize)]])
+            window_sum_lat = " ".join([c.latin for c in clauses[i:(i+windowSize)]])
+
+
+# must figure out what to do with chunked clauses e.g how to mark them as chunked, how to view chunks, how to handle chunks 
+# probably have chunkClauses return placeholder english and latin
+# so refactor main function to work with generic, then inside loop, run chunk function initially, then use result to print latin and check english
+# then have to dechunk english input to maintain individual chunk scores 
 
 
 def fuzzyMatch(userInput, expectedInput):
