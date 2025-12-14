@@ -1,6 +1,7 @@
 import re
 import time
 from thefuzz import fuzz
+from thefuzz import process
 # from typing import List
 
 
@@ -75,6 +76,20 @@ testPassage = Passage(
                 latin="consectetur adipiscing elit",
                 english="jumps over the lazy dog"
             )
+        ]),
+        Paragraph(clauses=[
+            Clause(
+                latin="caecilius est in horto",
+                english="caecilius is in the garden"
+            ),
+            Clause(
+                latin="ancilla delectat grumio",
+                english="the slave girl pleases grumio"
+            ),
+            Clause(
+                latin="et grumio delectat ancillam",
+                english="and grumio pleases the slave girl"
+            )
         ])
     ]
 )
@@ -106,7 +121,52 @@ def LearnPassage(passage):
 
 
 
+def createSetList(passage):
+    # first, chunk passage
+    setlist = [] # find better name
+    for paragraph in passage.paragraphs:
+        setlist.append(chunkClauses(paragraph.clauses))
 
+    # set list is a 3d array?
+    for i in range(len(setlist)):
+        for chunkedClauses in setlist[i]:
+            chunkedLatin = ", ".join([passage.paragraphs[i].clauses[clauseIndex].latin for clauseIndex in chunkedClauses])
+            chunkedEnglish = ", ".join([passage.paragraphs[i].clauses[clauseIndex].english for clauseIndex in chunkedClauses]) 
+
+
+            print(chunkedLatin)
+            # only capture learning data metrics on first input (assume if they keep getting it wrong its typos etc)
+            # startTime = time.time()
+            userInput = input("> ")
+            # endTime = time.time()
+            # completionTime = endTime - startTime
+            # print(completionTime)
+            accuracy = fuzz.ratio(userInput, chunkedEnglish)
+            print(accuracy)
+            # reverse engineer chunking
+            dechunkedInput = userInput.split(", ")            
+            clausesInParagraph = passage.paragraphs[i].clauses
+
+            for i in range(len(dechunkedInput)):
+                # fuzzy match split user input to clause object (IN SAME PARAGRAPH/sentence?) 
+                # only if match is greater than 85 accuracy: double check if too low or high: e.g for repittive clauses like grumio pleases slavegirl slavegirl pleases grumio
+                inputClause = dechunkedInput[i]
+                # print(process.extractOne(inputClause, [clause.english for clause in clausesInParagraph]))
+                if process.extractOne(inputClause, [clause.english for clause in clausesInParagraph])[-1] >= 85: 
+                    clause = process.extractOne(inputClause, clausesInParagraph)[0]
+
+                clause.avgAccuracy = (clause.avgAccuracy * clause.attempts + accuracy) / (clause.attempts + 1)
+                clause.attempts += 1
+                print(clause.avgAccuracy)
+                print(clause.level)
+                print("input clause, ",  inputClause.lower())
+                if inputClause.lower() != clause.english:
+                    print(f"{clause.english}")
+                    while True:
+                        userInput = input("> ")
+                        if userInput.lower() == clause.english:
+                            break
+                        print(f"{clause.english}")
 
 
 def chunkClauses(clauses):
@@ -128,8 +188,8 @@ def chunkClauses(clauses):
 
     return chunklist
 
-print(chunkClauses(testPassage.paragraphs[0].clauses))
-
+# print(chunkClauses(testPassage.paragraphs[0].clauses))
+createSetList(testPassage)
 #             window_sum_eng = " ".join([c.english for c in clauses[i:(i+windowSize)]])
 #             window_sum_lat = " ".join([c.latin for c in clauses[i:(i+windowSize)]])
 
@@ -185,6 +245,11 @@ def calculateMetrics():
 fuzzy match so its not bad like anki
 kinda reinvtengint the wheel could just import a fuzzy matcher but thats boring
 
+defo need custom fuzzing because thefuzz isnt appropariate for this use case e.g
+grumio ;lkasjdf;lkjasdkfj slavegirl gives 86 match for grumio pleases the slavegirl
+is this mastery?
+or possibly just adjust levelling
+
 think might have to implement custom fuzz or do library fuzz AND split into words and check letter by letter per word to find common mistake words)
 could give clues e.g if get wrong (but should know it due to # times etc) then reveal first letter of next word or smth
 
@@ -197,7 +262,7 @@ start chunking when avg accuracy > good
 
 
 
-LearnPassage(testPassage)
+# LearnPassage(testPassage)
 # text = "cum sis pietatis exemplum, fratremque optimum et amantissimum tui pari caritate dilexeris, filiamque eius ut tuam diligas, nec tantum amitae eiaffectum verum etiam patris amissi repraesentes, non dubito maximo tibi guadio fore cum cognoveris dignam patre dignam te dignam avo evadere."
 # translation = ""
 
