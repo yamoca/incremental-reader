@@ -1,9 +1,11 @@
 import data
 import re
+import time
 from dataclasses import dataclass
 
 
 # immutable, all other structures reference these
+# not immutable cause gotta change attempts and accuracy etc
 @dataclass
 class AtomicChunk:
     id: int
@@ -11,7 +13,9 @@ class AtomicChunk:
     english: str
     avgAccuracy: float = 0.0
     attempts: int = 0 
-    avgTime: float = 0.0
+    # avgTime: float = 0.0 
+    # cant use time as complex to tell time for individual chunks when testing merged chunks
+    # future feature: validate as typing to detect when chunk starts and ends and time individually
 
 @dataclass
 class MergedChunk:
@@ -34,11 +38,16 @@ class ChunkStore:
         return [self._atomic[i] for i in merged.chunk_ids]
 
     def latin(self, merged: MergedChunk) -> str:
-        return " ".join([self._atomic[i].latin for i in merged.chunk_ids])
+        return ". ".join([self._atomic[i].latin for i in merged.chunk_ids])
     
     def english(self, merged: MergedChunk) -> str:
-        return " ".join([self._atomic[i].english for i in merged.chunk_ids])
+        return ". ".join([self._atomic[i].english for i in merged.chunk_ids])
 
+    def recordAttempt(self, merged: MergedChunk, accuracyList: list[float]):
+        atoms = self.atoms(merged)
+        for i, accuracy in enumerate(accuracyList):
+            atoms[i].avgAccuracy = ((atoms[i].avgAccuracy * atoms[i].attempts) + accuracy) / (atoms[i].attempts + 1)
+            atoms[i].attempts += 1
 
 
 def initialiseChunks(passage):
@@ -71,3 +80,32 @@ def initialiseChunks(passage):
 
 atomic_chunks, merged_chunks = initialiseChunks(data.text)
 chunkStore = ChunkStore(atomic_chunks)
+
+
+def test(merged_chunk):
+    latin = chunkStore.latin(merged_chunk)
+    english = chunkStore.english(merged_chunk)
+    # display latin
+    print(latin)
+
+    # for debugging
+    print(english)
+
+
+    # get answer and answer time
+    startTime = time.time()
+    userInput = input("> ").strip().lower()
+    endTime = time.time()
+    answerTime = endTime - startTime
+
+    # validate: accuracy etc
+    if userInput == english.strip().lower():
+        # fully correct so can skip complex validation
+        chunkStore.recordAttempt(merged_chunk, [100.0 for x in merged_chunk.chunk_ids]) # create list of 100 accuracy same size as number of chunks
+        print("recorded")
+        print(chunkStore.atoms(merged_chunk))
+    else: 
+        print(english)
+
+practice_chunk = MergedChunk([1, 2])
+test(practice_chunk)
