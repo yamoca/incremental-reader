@@ -122,18 +122,12 @@ def test(merged_chunk):
     userInput = input("> ").strip().lower()
 
     # validate: accuracy etc
-    if userInput == english.strip().lower():
-        # fully correct so can skip complex validation
-        chunkStore.recordAttempt(merged_chunk, [100.0 for x in merged_chunk.chunk_ids]) # create list of 100 accuracy same size as number of chunks
-        print("recorded")
-        print(chunkStore.atoms(merged_chunk))
-    else: 
-        accuracyList = []
-        for i, clause in enumerate(userInput.split(".")):
-            accuracyList.append(check_accuracy(clause, english.split(".")[i]))
+    accuracyList = []
+    for i, clause in enumerate(userInput.split(".")):
+        accuracyList.append(check_accuracy(clause, english.split(".")[i]))
         
-        chunkStore.recordAttempt(merged_chunk, accuracyList)
-        print(chunkStore.atoms(merged_chunk))
+    chunkStore.recordAttempt(merged_chunk, accuracyList)
+    print(chunkStore.atoms(merged_chunk))
 
 practice_chunk = MergedChunk([1, 2])
 test(practice_chunk)
