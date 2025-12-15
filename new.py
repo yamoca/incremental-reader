@@ -81,10 +81,37 @@ def initialiseChunks(passage):
 atomic_chunks, merged_chunks = initialiseChunks(data.text)
 chunkStore = ChunkStore(atomic_chunks)
 
+def check_accuracy(given: str, expected: str) -> float:
+    # need a method so that doing one wrong thing at the start doesnt result in it all being wrong (as currently, letters would all shift out of order)
+    # currently (GIVEN: "th quick brown fox") and (EXPECTED: "the quick brown fox") would give very low accuracy
+    errors = 0
+    if len(given) <= len(expected):
+        print("given is shorter than expected")
+        for i, letter in enumerate(given):
+            if letter != expected[i]:
+                errors += 1
+
+        print(errors)
+        difference = len(expected) - len(given) # should always be pos as under condition that given <= expected
+        accuracy = ((len(expected) - errors - difference) / len(expected)) * 100 # subtracting difference means thatt all missed letters are treated as errors 
+        return accuracy
+    else:
+        print("given is longer than expected")
+        for i, letter in enumerate(expected):
+            if letter != given[i]:
+                errors += 1
+
+        print(errors)
+        accuracy = ((len(given) - errors) / len(given)) * 100
+        return accuracy
+
+
 
 def test(merged_chunk):
     latin = chunkStore.latin(merged_chunk)
-    english = chunkStore.english(merged_chunk)
+    # consider stripping and lowering in chunkstore or jsut find somehwere more general to normalise data
+    english = chunkStore.english(merged_chunk).strip().lower()
+    print("--- Please remember to put a . in between chunks, as lines up with the latin, so that individual chunks can be properly stored ---")
     # display latin
     print(latin)
 
@@ -92,11 +119,7 @@ def test(merged_chunk):
     print(english)
 
 
-    # get answer and answer time
-    startTime = time.time()
     userInput = input("> ").strip().lower()
-    endTime = time.time()
-    answerTime = endTime - startTime
 
     # validate: accuracy etc
     if userInput == english.strip().lower():
@@ -105,7 +128,12 @@ def test(merged_chunk):
         print("recorded")
         print(chunkStore.atoms(merged_chunk))
     else: 
-        print(english)
+        accuracyList = []
+        for i, clause in enumerate(userInput.split(".")):
+            accuracyList.append(check_accuracy(clause, english.split(".")[i]))
+        
+        chunkStore.recordAttempt(merged_chunk, accuracyList)
+        print(chunkStore.atoms(merged_chunk))
 
 practice_chunk = MergedChunk([1, 2])
 test(practice_chunk)
