@@ -32,6 +32,9 @@ class ChunkStore:
     def __init__(self, atomic_chunks: list[AtomicChunk]):
         self._atomic = atomic_chunks
 
+    # need tighter integrtion between chunkstore and mergedchunk
+    # maybe a get func that takes in a list of chunk ids and returns a list of chunks
+
     def get(self, chunk_id: int) -> AtomicChunk:
         return self._atomic[chunk_id]
 
@@ -148,8 +151,37 @@ def study(deck: Deck):
             test(chunk)
         
         # check_for_chunks_to_merge
+        chunks_to_merge = []
+
+        for chunk in deck.chunks:
+            for id in chunk.chunk_ids:
+                if chunkStore.get(id).avgAccuracy > 90:
+                    chunks_to_merge.append(id)
+
+        print(chunks_to_merge)
+
+        twodimensionlist = []
+        newchunks = 1
+        for i, id in enumerate(chunks_to_merge):
+            if i == 0: 
+                twodimensionlist.append([id])
+                last_id = id 
+            else:
+                if id == last_id + 1:
+                    twodimensionlist[newchunks-1].append(id)
+                else:
+                    twodimensionlist.append([id])
+                    newchunks += 1
+
+        print(twodimensionlist)
+
         # mergechunks()
         # update deck: careful, is this allowed: changing current scope variable within function that its operating with?
+
+        # [1, 2, 3, 5] currently returns [[1, 2], [3], [5]]
+        # should return [[1, 2, 3,], [5]]
+        # think about using linked lists
+
 
 # need a "ChunkManager" or something official to actually decide which chunks need merging and when
 # once every "game loop" -> in study func ?
