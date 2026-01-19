@@ -17,6 +17,9 @@ class AtomicChunk:
     # cant use time as complex to tell time for individual chunks when testing merged chunks
     # future feature: validate as typing to detect when chunk starts and ends and time individually
 
+
+# implement true composite pattern by creating base "chunk" class. mergedchunk and atomicchunk then inherit from this
+# probably also move latin, english etc methods to be implemented at the chunk level, not chunkstore.
 @dataclass
 class MergedChunk:
     chunk_ids: list[int]
